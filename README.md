@@ -15,6 +15,8 @@
 - **분산 QCNN (8큐비트, 4+4):** 각 파티가 독립 QCNN 학습. conv(RY + ring CRY) → conditional pooling(mid-circuit measurement 후 조건부 회전) → 생존 큐비트 readout → 고전 결합. 파티 간 표현력은 늘리지 않아 cross 구조는 얽힘 없이 풀 수 없음.
 - **CPFP 진단·처방:** ① 얽힘 없는 baseline 학습 → ② residual `r = y − f0` 추출 → ③ 파티 간 cross-correlation 행렬 `C` 구성 → ④ rank-1(분리 가능 성분) 제거 후 SVD로 얽힘 수요가 큰 쌍을 처방. 분리 가능한 cross는 고전 결합기가 이미 표현하므로 제거해야 진짜 비분리(off-rank-1) cross 수요만 남음.
 
+![Distributed QCNN circuit](figures/distributed_qcnn_circuit.png)
+
 ## 환경 설정
 
 ```bash
@@ -31,21 +33,19 @@ PennyLane (default.qubit, autograd backend), numpy, pandas, matplotlib.
 
 **1. 얽힘은 분리 불가능한 cross에서만 필요.** 데이터를 marginal / separable(rank-1) / offrank1(rank≥2)로 나누면, separable cross는 얽힘 없이도 정확도 1.00으로 풀리고(고전적으로 분해 가능), offrank1에서만 None 0.73 → Prescribed 0.89로 얽힘이 도움. 진단 단계에서 rank-1 제거가 정당함을 실증.
 
+![Entanglement helps only off-rank-1 cross](figures/11_synthablate_cond.png)
+
 **2. 진단이 cross 구조를 정확히 짚음.** match2(cross)에서는 residual cross-demand 행렬의 대각 성분만 솟고(diag/off ≈ 55배), pair3(marginal)에서는 전면 0. cross가 없으면 거짓 양성 없이 0을 줌.
+
+![Residual cross-demand diagnosis](figures/03_residual_diagnosis_cond.png)
 
 **3. "올바른 위치"가 성능을 결정.** 개수·강도·라우팅을 통제한 채 위치만 바꾼 Under vs Wrong에서 올바른 배치가 +0.123(p=0.03) 우월. 더 많이 얽은 Over는 오히려 하락. 또한 cross 데이터(match2)에서만 처방이 효과 있고 marginal(pair3)에서는 무의미.
 
+![Ablation: None < Wrong < Under < Prescribed > Over](figures/04_ablation_cond.png)
+
 > 핵심 수치 (3 seed, paired t-test): None 0.580 < Wrong 0.736 < Under 0.859 < **Prescribed 0.914** > Over 0.841. Prescribed > Wrong은 +0.178 (p=0.0071).
 
-그림 (`figures/`):
-
-- `02_capacity_scan_cond.png` — 로컬 모델은 cross(match2)를 못 풀고 marginal(pair3)만 풂
-- `03_residual_diagnosis_cond.png` — residual cross-demand 행렬: match2는 대각, pair3는 0
-- `04_ablation_cond.png` — None < Wrong < Under < Prescribed > Over
-- `13_prescribe_fix_cond.png` — 처방 얽힘은 cross(match2)에만 효과, marginal(pair3)엔 무의미
-- `10_separable_diag_cond.png`, `11_synthablate_cond.png` — 얽힘은 off-rank-1 cross에서만 필요
-- `06_synthetic_rank_cond.png`, `12_match2_cross_svd.png` — residual 스펙트럼이 nonlocal rank 복원
-- `distributed_qcnn_circuit.png` — 분산 QCNN 회로도
+그 외 그림은 [`figures/`](figures/) 참고: `02_capacity_scan_cond`(로컬은 cross 못 풂)·`13_prescribe_fix_cond`(처방은 cross에만 효과)·`10_separable_diag_cond`·`06_synthetic_rank_cond`·`12_match2_cross_svd`(residual 스펙트럼이 nonlocal rank 복원).
 
 **한계.** 위 성공은 4색 데이터 × 4-level 각도 인코딩 × Z₄ 진단 basis가 정확히 정렬된 toy 설정에 의존하며(임의 데이터로의 일반화는 검증 중), Prescribed 우위에는 "올바른 feature pairing"과 "pooling 깊이 생존"이 함께 기여해 완전 분리는 미완입니다. 통계는 3 seed 기준입니다. **후속**으로 임의 구조(고차 상관·3파티)로의 일반화, 쌍별 얽힘 세기 처방, 실제 이미지 데이터 적용을 계획합니다.
 

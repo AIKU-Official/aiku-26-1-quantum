@@ -24,10 +24,6 @@ ENV/
 .idea/
 .vscode/
 
-# Large arrays (>10MB): keep small synth data, ignore big regenerated caches
-results/data/
+# Large arrays: 데이터는 작은 CSV(data/) 로 추적, 학습된 cache/*.npz 등은 무시
 *.npy
-# track only the small synth_* dataset npz; ignore other large npz
 *.npz
-!data/synth_cosine.npz
-!data/synth_noncosine.npz

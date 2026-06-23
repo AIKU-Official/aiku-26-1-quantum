@@ -1,0 +1,33 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Jupyter
+.ipynb_checkpoints/
+
+# Distribution / packaging
+build/
+dist/
+*.egg-info/
+.eggs/
+
+# Virtual environments
+.venv/
+venv/
+env/
+ENV/
+
+# OS / editor
+.DS_Store
+*.swp
+.idea/
+.vscode/
+
+# Large arrays (>10MB): keep small synth data, ignore big regenerated caches
+results/data/
+*.npy
+# track only the small synth_* dataset npz; ignore other large npz
+*.npz
+!data/synth_cosine.npz
+!data/synth_noncosine.npz
